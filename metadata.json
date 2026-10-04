@@ -1,0 +1,6 @@
+{
+  "name": "Minha Extra",
+  "description": "Conectando empresas e profissionais freelancers no setor de gastronomia e eventos com Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

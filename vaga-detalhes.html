@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Extra - Detalhes da Vaga</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN Oficial -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        primaryHover: '#4338ca', // Indigo 700
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        #toast {
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #fff;
+            width: 1.25rem;
+            height: 1.25rem;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .pb-safe { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        }
+
+        @media print {
+            body * { visibility: hidden !important; }
+            #modal-contrato, #modal-contrato * { visibility: visible !important; }
+            #modal-contrato { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; background: white !important; z-index: 99999 !important; display: block !important; }
+            #corpo-documento-contrato { overflow: visible !important; height: auto !important; max-height: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col relative">
+
+    <!-- Top Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 -translate-y-[150%] opacity-0 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-start space-x-3 z-50 w-[92%] max-w-md transition-all">
+        <div class="bg-white/20 p-1.5 rounded-xl shrink-0 mt-0.5">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+            <span class="font-bold text-sm block" id="toast-title">Candidatura Registrada!</span>
+            <span class="text-xs text-emerald-100 mt-0.5 block leading-tight" id="toast-message">Seu perfil e chave PIX foram enviados à empresa na tabela 'candidaturas'.</span>
+        </div>
+    </div>
+
+    <!-- Header Superior com Navegação -->
+    <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between z-20 sticky top-0 shadow-xs">
+        <div class="flex items-center space-x-2">
+            <a href="dashboard.html" class="p-2 -ml-2 text-slate-500 hover:text-primary transition-colors focus:outline-none rounded-xl hover:bg-slate-100 flex items-center group cursor-pointer" title="Voltar ao Painel">
+                <svg class="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <div>
+                <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-none">Detalhes da Oportunidade</h1>
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5" id="vaga-header-subtitle">Carregando informações...</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a href="chat.html" class="p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-colors hidden sm:flex items-center gap-1.5 text-xs font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <span>Chat</span>
+            </a>
+            <a href="dashboard.html" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-xl transition-colors">
+                Ver Todas as Vagas
+            </a>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal do Detalhe da Vaga -->
+    <main class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-8 pb-36">
+        
+        <!-- Estado de Carregamento -->
+        <div id="vaga-loading" class="py-16 text-center text-slate-400">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+            <p class="text-sm font-medium">Buscando dados completos da vaga no Supabase...</p>
+        </div>
+
+        <!-- Conteúdo Completo (visível após carregar) -->
+        <div id="vaga-content" class="space-y-6 hidden">
+
+            <!-- Banner Superior / Badges de Status e Categoria -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-200/90 relative overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-2 flex-wrap" id="vaga-badges-container">
+                        <span id="badge-categoria" class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5">
+                            🍴 Gastronomia
+                        </span>
+                        <span id="badge-status" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Vaga Aberta
+                        </span>
+                        <span class="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+                            PIX Garantido
+                        </span>
+                    </div>
+
+                    <div class="text-right">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Remuneração Diária</span>
+                        <span class="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight" id="vaga-valor">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Título da Oportunidade -->
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight mb-3" id="vaga-titulo">
+                    Título da Vaga
+                </h2>
+
+                <!-- Perfil da Empresa Contratante -->
+                <div class="flex items-center text-slate-600 pt-2 border-t border-slate-100 mt-4">
+                    <div class="w-10 h-10 rounded-xl bg-slate-900 text-white font-bold flex items-center justify-center mr-3 shrink-0 shadow-xs text-sm" id="empresa-avatar">
+                        EM
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="font-bold text-slate-900 text-sm sm:text-base block truncate" id="vaga-empresa">
+                            Empresa Contratante
+                        </span>
+                        <span class="text-xs text-slate-400 block truncate" id="vaga-empresa-cnpj">
+                            CNPJ Verificado • Maringá - PR
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerta Informativo de Candidatura Existente -->
+            <div id="candidatura-status-alert" class="hidden p-4 rounded-2xl border flex items-start gap-3 transition-all">
+                <!-- Injetado dinamicamente -->
+            </div>
+
+            <!-- Grade de Informações Chave do Turno (4 Cards) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <!-- Data -->
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-center">
+                    <div class="flex items-center text-slate-400 mb-1">
+                        <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Data do Turno</span>
+                    </div>
+                    <span class="font-bold text-slate-900 text-sm sm:text-base" id="vaga-data">A Combinar</span>
+                </div>
+                
+                <!-- Horário -->
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-center">
+                    <div class="flex items-center text-slate-400 mb-1">
+                        <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Horário / Turno</span>
+                    </div>
+                    <span class="font-bold text-slate-900 text-sm sm:text-base" id="vaga-horario">Período Noturno</span>
+                </div>
+
+                <!-- Pagamento -->
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-center">
+                    <div class="flex items-center text-slate-400 mb-1">
+                        <svg class="w-4 h-4 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Recebimento</span>
+                    </div>
+                    <span class="font-bold text-emerald-600 text-sm sm:text-base">PIX no Fim do Turno</span>
+                </div>
+
+                <!-- Localização -->
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-center">
+                    <div class="flex items-center text-slate-400 mb-1">
+                        <svg class="w-4 h-4 mr-1.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Local</span>
+                    </div>
+                    <span class="font-bold text-slate-900 text-sm sm:text-base truncate" id="vaga-local">Maringá - PR</span>
+                </div>
+            </div>
+
+            <!-- Bloco 1: Descrição Detalhada da Vaga -->
+            <div class="bg-white p-6 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 space-y-3">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Descrição da Vaga & Atividades</span>
+                </h3>
+                <p class="text-slate-600 text-sm leading-relaxed whitespace-pre-line" id="vaga-descricao">
+                    Carregando detalhes do serviço...
+                </p>
+            </div>
+
+            <!-- Bloco 2: Requisitos e O Que Levar -->
+            <div class="bg-white p-6 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 space-y-4">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    <span>Requisitos e Diretrizes para o Turno</span>
+                </h3>
+                
+                <ul class="space-y-3" id="vaga-requisitos">
+                    <li class="flex items-start text-xs sm:text-sm text-slate-700">
+                        <div class="bg-indigo-50 text-indigo-600 rounded-full p-1 mr-3 mt-0.5 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span>Experiência comprovada na função e agilidade no ritmo de serviço</span>
+                    </li>
+                    <li class="flex items-start text-xs sm:text-sm text-slate-700">
+                        <div class="bg-indigo-50 text-indigo-600 rounded-full p-1 mr-3 mt-0.5 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span>Pontualidade estrita: chegar 15 minutos antes do horário de início do turno</span>
+                    </li>
+                    <li class="flex items-start text-xs sm:text-sm text-slate-700">
+                        <div class="bg-indigo-50 text-indigo-600 rounded-full p-1 mr-3 mt-0.5 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span>Vestimenta profissional adequada: calçado de segurança antiderrapante e uniforme/dólmã limpo</span>
+                    </li>
+                    <li class="flex items-start text-xs sm:text-sm text-slate-700">
+                        <div class="bg-indigo-50 text-indigo-600 rounded-full p-1 mr-3 mt-0.5 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span>Chave PIX cadastrada e válida no perfil para recebimento da diária</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Bloco 3: Benefícios Oferecidos pela Empresa -->
+            <div class="bg-white p-6 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 space-y-3">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    <span>Benefícios no Turno</span>
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-600">
+                    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-base">🍲</span>
+                        <span>Alimentação / Refeição no local inclusa</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-base">⚡</span>
+                        <span>Pagamento via PIX direto no encerramento</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-base">⭐</span>
+                        <span>Avaliação positiva para convocações extras recorrentes</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-base">🤝</span>
+                        <span>Ambiente de trabalho profissional e seguro</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL DE CONTRATO DE PRESTAÇÃO DE SERVIÇOS (FREELANCE) -->
+    <div id="modal-contrato" class="fixed inset-0 bg-slate-900/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden transition-all">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <!-- Cabeçalho do Modal de Contrato -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">Contrato de Prestação de Serviços (Freelance)</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Leia e aceite as cláusulas abaixo para formalizar a sua candidatura</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalContrato()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-200/60 transition-colors cursor-pointer" title="Fechar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Corpo do Documento Jurídico -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm text-slate-700 bg-slate-50/50 leading-relaxed" id="corpo-documento-contrato">
+                <!-- Gerado dinamicamente via JavaScript -->
+            </div>
+
+            <!-- Rodapé com Checkbox de Aceite e Ações -->
+            <div class="p-4 sm:p-5 border-t border-slate-200 bg-white space-y-3 font-sans">
+                <label class="flex items-start gap-2.5 cursor-pointer select-none bg-indigo-50/70 p-3 rounded-xl border border-indigo-100 hover:bg-indigo-50 transition-colors">
+                    <input type="checkbox" id="check-aceite-contrato" onchange="toggleBotaoAceiteContrato()" class="mt-0.5 w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 focus:ring-2 cursor-pointer">
+                    <span class="text-xs text-slate-700 font-medium leading-snug">
+                        Declaro que li, compreendi e aceito integralmente todas as cláusulas deste <strong>Contrato de Prestação de Serviços (Freelance)</strong> e confirmo minha disponibilidade para o turno.
+                    </span>
+                </label>
+
+                <div class="flex items-center justify-between gap-3">
+                    <button type="button" onclick="imprimirContrato()" class="text-xs font-semibold px-3 py-2 rounded-xl text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span class="hidden sm:inline">Imprimir / Salvar</span>
+                    </button>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="fecharModalContrato()" class="text-xs font-semibold px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                            Cancelar
+                        </button>
+                        <button type="button" id="btn-confirmar-contrato" onclick="confirmarCandidaturaComContrato()" disabled class="text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl bg-slate-200 text-slate-400 transition-all flex items-center gap-2 cursor-not-allowed shadow-xs">
+                            <span id="btn-confirmar-contrato-text">Aceitar Contrato & Enviar Candidatura</span>
+                            <div id="btn-confirmar-contrato-spinner" class="spinner"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra Fixa Inferior com o Botão 'Candidatar-se' -->
+    <div class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 pb-safe z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div class="max-w-4xl mx-auto flex items-center gap-3">
+            <a href="dashboard.html" class="p-3.5 rounded-2xl border border-slate-200 text-slate-600 hover:text-primary hover:border-primary hover:bg-slate-50 transition-all shrink-0 cursor-pointer shadow-2xs" title="Voltar">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            
+            <button id="apply-btn" onclick="handleApplication()" class="flex-1 bg-primary hover:bg-primaryHover text-white font-bold py-3.5 px-6 rounded-2xl shadow-md shadow-indigo-200 transition-all flex justify-center items-center gap-2 focus:outline-none focus:ring-4 focus:ring-indigo-100 active:scale-[0.99] cursor-pointer text-sm sm:text-base">
+                <span id="apply-text">Candidatar-se a Esta Vaga</span>
+                <div id="apply-spinner" class="spinner"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Script de Configuração do Supabase -->
+    <script src="./supabase-client.js"></script>
+
+    <script>
+        let currentVagaId = null;
+        let currentVagaObj = null;
+        let currentFreelancer = null;
+        let jaCandidatado = false;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Identifica o freelancer logado
+            currentFreelancer = window.MinhaExtra.SessionManager.getUser();
+
+            const params = new URLSearchParams(window.location.search);
+            const idParam = params.get('id');
+            
+            if (idParam) {
+                currentVagaId = parseInt(idParam, 10);
+            }
+
+            await carregarDetalhesVaga(currentVagaId);
+
+            // Se requisitado abrir o contrato diretamente (ex: vindo do dashboard)
+            if (params.get('abrir_contrato') === '1' || params.get('auto_apply') === 'true') {
+                setTimeout(() => {
+                    if (!jaCandidatado) {
+                        abrirModalContrato();
+                    }
+                }, 300);
+            }
+        });
+
+        // Carrega dados completos da vaga a partir do Supabase
+        async function carregarDetalhesVaga(vagaId) {
+            const loading = document.getElementById('vaga-loading');
+            const content = document.getElementById('vaga-content');
+            const supabase = window.MinhaExtra.getSupabase();
+
+            try {
+                let vaga = null;
+
+                if (vagaId) {
+                    // Busca por ID específico trazendo dados da empresa vinculada
+                    const { data, error } = await supabase
+                        .from('vagas')
+                        .select('*, empresas(*)')
+                        .eq('id', vagaId)
+                        .maybeSingle();
+
+                    if (!error && data) {
+                        vaga = data;
+                    }
+                }
+
+                // Se não encontrou pelo ID ou idParam não foi passado, busca a primeira vaga aberta
+                if (!vaga) {
+                    const { data: ultimasVagas, error: errList } = await supabase
+                        .from('vagas')
+                        .select('*, empresas(*)')
+                        .order('id', { ascending: false })
+                        .limit(1);
+
+                    if (!errList && ultimasVagas && ultimasVagas.length > 0) {
+                        vaga = ultimasVagas[0];
+                    }
+                }
+
+                // Fallback caso o banco esteja inacessível ou sem registros
+                if (!vaga) {
+                    vaga = {
+                        id: 101,
+                        titulo: 'Sushiman para Noite de Sábado Especial',
+                        descricao: 'Preparo de pratos orientais quentes e frios, montagem de combinados especiais, uramakis e sashimis durante o movimento do final de semana.\n\nBuscamos um profissional ágil, com boa postura de atendimento e técnica apurada.',
+                        valor_pagamento: 350.00,
+                        data_horario: '2026-10-10T19:00:00',
+                        status: 'aberta',
+                        empresas: {
+                            razao_social: 'Buffet Sabores do Oriente',
+                            cnpj: '12.345.678/0001-90',
+                            endereco: 'Maringá - PR (Centro)'
+                        }
+                    };
+                }
+
+                currentVagaObj = vaga;
+                currentVagaId = vaga.id;
+
+                // Preenchimento dos dados na tela
+                renderizarDadosVaga(vaga);
+
+                // Verifica se o profissional já se candidatou previamente a esta vaga
+                await checarCandidaturaPrevia(vaga.id);
+
+            } catch (err) {
+                console.warn('Erro ao carregar detalhes da vaga:', err);
+            } finally {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            }
+        }
+
+        function renderizarDadosVaga(vaga) {
+            document.getElementById('vaga-titulo').innerText = vaga.titulo || 'Oportunidade Extra';
+            document.getElementById('vaga-header-subtitle').innerText = `Vaga #${vaga.id} • ${vaga.status === 'concluida' ? 'Concluída' : 'Aberta para Candidaturas'}`;
+            
+            // Valor formatado
+            const valor = Number(vaga.valor_pagamento || 0);
+            document.getElementById('vaga-valor').innerText = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Descrição
+            document.getElementById('vaga-descricao').innerText = vaga.descricao || 'Oportunidade na área de gastronomia e eventos.';
+
+            // Datas e horários
+            if (vaga.data_horario) {
+                try {
+                    const d = new Date(vaga.data_horario);
+                    document.getElementById('vaga-data').innerText = d.toLocaleDateString('pt-BR', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    document.getElementById('vaga-horario').innerText = `${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} em diante`;
+                } catch(e) {
+                    document.getElementById('vaga-data').innerText = 'Data a combinar';
+                }
+            }
+
+            // Localização e Empresa
+            const empresaNome = vaga.empresas?.razao_social || 'Restaurante Parceiro Minha Extra';
+            const empresaEndereco = vaga.empresas?.endereco || 'Maringá - PR (Centro)';
+            const empresaCnpj = vaga.empresas?.cnpj ? `CNPJ: ${vaga.empresas.cnpj}` : 'Empresa Credenciada';
+
+            document.getElementById('vaga-empresa').innerText = empresaNome;
+            document.getElementById('vaga-empresa-cnpj').innerText = `${empresaCnpj} • ${empresaEndereco}`;
+            document.getElementById('vaga-local').innerText = empresaEndereco;
+
+            // Iniciais do Avatar
+            const initials = empresaNome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            document.getElementById('empresa-avatar').innerText = initials || 'EM';
+
+            // Categoria inteligente
+            detectarECarregarCategoria(vaga);
+        }
+
+        function detectarECarregarCategoria(vaga) {
+            const texto = `${vaga.titulo || ''} ${vaga.descricao || ''}`.toLowerCase();
+            const badgeCat = document.getElementById('badge-categoria');
+
+            if (texto.includes('sushiman') || texto.includes('sushi') || texto.includes('oriental')) {
+                badgeCat.className = 'bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5';
+                badgeCat.innerHTML = '🍣 Sushiman';
+            } else if (texto.includes('garçom') || texto.includes('garcom') || texto.includes('garçonete')) {
+                badgeCat.className = 'bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5';
+                badgeCat.innerHTML = '🍽️ Garçom';
+            } else if (texto.includes('atendimento') || texto.includes('recepção') || texto.includes('balcão')) {
+                badgeCat.className = 'bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5';
+                badgeCat.innerHTML = '🛎️ Atendimento';
+            } else if (texto.includes('chapeiro') || texto.includes('chapa') || texto.includes('hambúrguer')) {
+                badgeCat.className = 'bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5';
+                badgeCat.innerHTML = '🍔 Chapeiro';
+            } else {
+                badgeCat.className = 'bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5';
+                badgeCat.innerHTML = '🍴 Gastronomia';
+            }
+        }
+
+        // Verifica no banco se este profissional já aplicou para esta vaga
+        async function checarCandidaturaPrevia(vagaId) {
+            const supabase = window.MinhaExtra.getSupabase();
+            const freelancerId = await window.MinhaExtra.ensureValidFreelancerId();
+
+            try {
+                const { data, error } = await supabase
+                    .from('candidaturas')
+                    .select('*')
+                    .eq('vaga_id', vagaId)
+                    .eq('freelancer_id', freelancerId)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    jaCandidatado = true;
+                    marcarComoJaCandidatado(data.status_candidatura || 'pendente');
+                }
+            } catch(e) {
+                console.warn('Erro ao checar candidatura prévia:', e);
+            }
+        }
+
+        function marcarComoJaCandidatado(status) {
+            const btn = document.getElementById('apply-btn');
+            const text = document.getElementById('apply-text');
+            const alert = document.getElementById('candidatura-status-alert');
+
+            btn.disabled = true;
+            btn.classList.remove('bg-primary', 'hover:bg-primaryHover', 'shadow-indigo-200', 'cursor-pointer');
+            btn.classList.add('bg-slate-200', 'text-slate-600', 'cursor-not-allowed', 'border', 'border-slate-300');
+
+            let statusText = 'Pendente de Avaliação';
+            let alertBg = 'bg-amber-50 border-amber-200 text-amber-900';
+            let iconColor = 'text-amber-600';
+
+            if (status === 'aprovada') {
+                statusText = 'Aprovado para o Turno!';
+                alertBg = 'bg-emerald-50 border-emerald-200 text-emerald-900';
+                iconColor = 'text-emerald-600';
+            } else if (status === 'recusada') {
+                statusText = 'Candidatura Recusada';
+                alertBg = 'bg-rose-50 border-rose-200 text-rose-900';
+                iconColor = 'text-rose-600';
+            }
+
+            text.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Candidatura Enviada (${statusText})</span>
+                </div>
+            `;
+
+            alert.className = `p-4 rounded-2xl border flex items-start gap-3 transition-all ${alertBg}`;
+            alert.innerHTML = `
+                <svg class="w-5 h-5 ${iconColor} shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="flex-1 text-xs leading-relaxed">
+                    <p class="font-bold text-sm mb-0.5">Você já se candidatou a esta oportunidade!</p>
+                    <p>Status atual: <span class="font-bold underline">${statusText}</span>. A empresa possui seus dados de contato e chave PIX cadastrados.</p>
+                    <div class="mt-2.5 flex items-center gap-2">
+                        <a href="chat.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs">
+                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            Falar com a Empresa no Chat
+                        </a>
+                    </div>
+                </div>
+            `;
+            alert.classList.remove('hidden');
+        }
+
+        // ===============================================================
+        // ABERTURA E GESTÃO DO MODAL DE CONTRATO (FREELANCE)
+        // ===============================================================
+        function handleApplication() {
+            if (jaCandidatado) return;
+            abrirModalContrato();
+        }
+
+        // Abre o modal preenchendo as cláusulas do contrato com dados dinâmicos da vaga e do freelancer
+        function abrirModalContrato() {
+            if (jaCandidatado) return;
+            
+            const corpo = document.getElementById('corpo-documento-contrato');
+            corpo.innerHTML = gerarTextoContrato();
+
+            const check = document.getElementById('check-aceite-contrato');
+            check.checked = false;
+
+            const btnConfirmar = document.getElementById('btn-confirmar-contrato');
+            btnConfirmar.disabled = true;
+            btnConfirmar.className = 'text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl bg-slate-200 text-slate-400 transition-all flex items-center gap-2 cursor-not-allowed shadow-xs';
+
+            const modal = document.getElementById('modal-contrato');
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function fecharModalContrato() {
+            const modal = document.getElementById('modal-contrato');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Ativa ou desativa o botão de confirmação conforme o checkbox de aceite
+        function toggleBotaoAceiteContrato() {
+            const check = document.getElementById('check-aceite-contrato');
+            const btn = document.getElementById('btn-confirmar-contrato');
+            const statusAssinatura = document.getElementById('contrato-status-assinatura');
+
+            if (check.checked) {
+                btn.disabled = false;
+                btn.className = 'text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-200 active:scale-[0.98]';
+                if (statusAssinatura) {
+                    statusAssinatura.innerText = '✓ Aceite Eletrônico Confirmado';
+                    statusAssinatura.className = 'text-[10px] text-emerald-600 font-mono mt-1 block font-bold';
+                }
+            } else {
+                btn.disabled = true;
+                btn.className = 'text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl bg-slate-200 text-slate-400 transition-all flex items-center gap-2 cursor-not-allowed shadow-xs';
+                if (statusAssinatura) {
+                    statusAssinatura.innerText = 'Pendente de Aceite Eletrônico';
+                    statusAssinatura.className = 'text-[10px] text-indigo-600 font-mono mt-1 block';
+                }
+            }
+        }
+
+        // Gera o texto completo e formal do contrato de acordo com o padrão estipulado
+        function gerarTextoContrato() {
+            const vaga = currentVagaObj || {};
+            const empresaNome = vaga.empresas?.razao_social || 'Restaurante / Buffet Contratante';
+            const empresaCnpj = vaga.empresas?.cnpj || '12.345.678/0001-90';
+            const empresaEndereco = vaga.empresas?.endereco || 'Maringá - PR';
+
+            const freelancerNome = currentFreelancer?.nome_completo || currentFreelancer?.nome || 'Profissional Freelancer';
+            const freelancerDoc = currentFreelancer?.cpf || currentFreelancer?.chave_pix || '000.000.000-00';
+            const freelancerEndereco = currentFreelancer?.cidade ? `${currentFreelancer.cidade} - ${currentFreelancer.estado || 'PR'}` : 'Maringá - PR';
+
+            const tituloServico = vaga.titulo || 'Serviços Gastronômicos Freelance';
+            const descServico = vaga.descricao || 'Atendimento às mesas, apoio na praça de trabalho, montagem de pratos e organização geral.';
+
+            let dataTurnoFormatada = 'Data a combinar';
+            let horarioTurnoFormatado = 'turno a ser definido operacionalmente';
+            if (vaga.data_horario) {
+                try {
+                    const d = new Date(vaga.data_horario);
+                    dataTurnoFormatada = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                    horarioTurnoFormatado = `início às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+                } catch(e) {}
+            }
+
+            const valorNum = Number(vaga.valor_pagamento || 0);
+            const valorFormatado = valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const hoje = new Date();
+            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const dataHojePorExtenso = `${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+
+            return `
+                <div class="bg-white p-5 sm:p-7 rounded-2xl border border-slate-200 shadow-2xs space-y-4 font-serif">
+                    <div class="text-center pb-4 border-b border-slate-200">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-indigo-600 block mb-1 font-sans">Instrumento Particular de Acordo Civil</span>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight">CONTRATO DE PRESTAÇÃO DE SERVIÇOS (FREELANCE)</h2>
+                        <span class="text-[11px] text-slate-400 font-sans">Formalizado digitalmente via Minha Extra</span>
+                    </div>
+
+                    <div class="space-y-3.5 text-slate-700 leading-relaxed text-xs sm:text-sm">
+                        <p>
+                            <strong>CONTRATANTE:</strong> <span class="text-slate-900 font-bold">${escapeHtml(empresaNome)}</span>, inscrita no CNPJ nº <span class="font-mono font-medium">${escapeHtml(empresaCnpj)}</span>, com sede em <span class="font-medium">${escapeHtml(empresaEndereco)}</span>, neste ato representada por <strong>Minha Extra</strong>.
+                        </p>
+
+                        <p>
+                            <strong>CONTRATADO(A):</strong> <span class="text-slate-900 font-bold">${escapeHtml(freelancerNome)}</span>, inscrito(a) no CPF/CNPJ nº <span class="font-mono font-medium">${escapeHtml(freelancerDoc)}</span>, residente e domiciliado(a) em <span class="font-medium">${escapeHtml(freelancerEndereco)}</span>.
+                        </p>
+
+                        <p class="italic text-slate-600">
+                            As partes acima qualificadas celebram o presente Contrato de Prestação de Serviços, que se regerá pelas seguintes cláusulas:
+                        </p>
+
+                        <div class="pt-2 space-y-3.5">
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 1ª – Do Objeto</h4>
+                                <p class="mt-1">
+                                    O(A) CONTRATADO(A) compromete-se a prestar ao(à) CONTRATANTE os serviços de:
+                                    <span class="block mt-1 font-medium text-slate-900 bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-sans text-xs">
+                                        ${escapeHtml(tituloServico)} — ${escapeHtml(descServico)}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 2ª – Dos Prazos e Escala de Trabalho</h4>
+                                <p class="mt-1">
+                                    A execução dos serviços ocorrerá no seguinte formato de tempo/entrega:
+                                    <span class="block mt-1 font-medium text-slate-900">
+                                        Escala prevista para o dia <strong>${dataTurnoFormatada}</strong>, com <strong>${horarioTurnoFormatado}</strong>, devendo o(a) CONTRATADO(A) comparecer com 15 minutos de antecedência devidamente uniformizado(a) e com calçado de segurança antiderrapante.
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 3ª – Da Remuneração e Pagamento</h4>
+                                <p class="mt-1">
+                                    Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de <strong class="text-emerald-700 font-bold text-sm">R$ ${valorFormatado}</strong> por diária.
+                                </p>
+                                <p class="mt-1.5 text-slate-600 bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-100 font-sans text-xs">
+                                    <strong>Parágrafo único:</strong> O pagamento será realizado via <strong>Pix</strong> diretamente na chave Pix cadastrada pelo(a) CONTRATADO(A) logo após o término do turno e conferência do encerramento das atividades.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 4ª – Da Inexistência de Vínculo Empregatício</h4>
+                                <p class="mt-1 text-justify">
+                                    Fica expressamente acordado que este contrato é de natureza estritamente civil, não havendo qualquer subordinação jurídica, exclusividade ou vínculo empregatício (CLT) entre as partes. O(A) CONTRATADO(A) possui total autonomia técnica e operacional na execução dos serviços.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 5ª – Da Confidencialidade e Propriedade</h4>
+                                <p class="mt-1 text-justify">
+                                    O(A) CONTRATADO(A) obriga-se a manter em absoluto sigilo todas as informações, dados, códigos, receitas ou estratégias de negócios do(a) CONTRATANTE a que tiver acesso. Todos os direitos de propriedade intelectual e materiais desenvolvidos durante a vigência deste contrato pertencerão exclusivamente ao(à) CONTRATANTE.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 6ª – Da Rescisão</h4>
+                                <p class="mt-1 text-justify">
+                                    Este contrato poderá ser rescindido a qualquer momento por qualquer uma das partes, mediante aviso prévio de 24 (vinte e quatro) horas. Em caso de rescisão, o(a) CONTRATANTE efetuará o pagamento proporcional aos serviços já efetivamente realizados até a data do encerramento.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 font-sans text-xs uppercase tracking-wider text-indigo-700">Cláusula 7ª – Do Foro</h4>
+                                <p class="mt-1 text-justify">
+                                    Para dirimir quaisquer controvérsias oriundas deste contrato, as partes elegem o foro da <strong>Comarca de Maringá, Estado do Paraná</strong>, renunciando a qualquer outro, por mais privilegiado que seja.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 mt-6 text-center font-sans">
+                            <p class="font-medium text-slate-600 text-xs">
+                                E, por estarem de inteiro e comum acordo, assinam este contrato em 02 (duas) vias de igual teor.
+                            </p>
+                            <p class="font-bold text-slate-800 text-xs mt-1.5">
+                                Maringá - PR, ${dataHojePorExtenso}.
+                            </p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-3 border-t border-dashed border-slate-200 text-xs">
+                                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">CONTRATANTE</span>
+                                    <span class="font-bold text-slate-900 block truncate">${escapeHtml(empresaNome)}</span>
+                                    <span class="text-indigo-600 text-[11px] block">Minha Extra Intermediações</span>
+                                    <span class="text-[10px] text-emerald-600 font-mono mt-1 block">✓ Autenticação Digital Registrada</span>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">CONTRATADO(A)</span>
+                                    <span class="font-bold text-slate-900 block truncate">${escapeHtml(freelancerNome)}</span>
+                                    <span class="text-slate-500 font-mono text-[11px] block truncate">${escapeHtml(freelancerDoc)}</span>
+                                    <span class="text-[10px] text-indigo-600 font-mono mt-1 block" id="contrato-status-assinatura">Pendente de Aceite Eletrônico</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===============================================================
+        // CONFIRMAÇÃO DO ACEITE DO CONTRATO E INSERÇÃO NA TABELA 'candidaturas'
+        // ===============================================================
+        async function confirmarCandidaturaComContrato() {
+            const check = document.getElementById('check-aceite-contrato');
+            if (!check.checked) return;
+
+            const btnConfirmar = document.getElementById('btn-confirmar-contrato');
+            const textConfirmar = document.getElementById('btn-confirmar-contrato-text');
+            const spinnerConfirmar = document.getElementById('btn-confirmar-contrato-spinner');
+
+            btnConfirmar.disabled = true;
+            textConfirmar.innerText = 'Gravando Contrato no Supabase...';
+            spinnerConfirmar.style.display = 'block';
+
+            const freelancerId = await window.MinhaExtra.ensureValidFreelancerId();
+            const supabase = window.MinhaExtra.getSupabase();
+
+            try {
+                // Garante que o vaga_id exista na tabela 'vagas' do Supabase para integridade referencial
+                const validVagaId = await window.MinhaExtra.ensureValidVagaId(currentVagaId, currentVagaObj);
+
+                // Executa a inserção real na tabela 'candidaturas'
+                const { data: novaCandidatura, error: errInsert } = await supabase
+                    .from('candidaturas')
+                    .insert([{
+                        vaga_id: validVagaId,
+                        freelancer_id: freelancerId,
+                        status_candidatura: 'pendente',
+                        data_candidatura: new Date().toISOString()
+                    }])
+                    .select();
+
+                if (errInsert) {
+                    window.MinhaExtra.handleSupabaseError(errInsert, 'Inserir Candidatura com Contrato');
+                    throw errInsert;
+                }
+
+                // Salva comprovante de aceite local para auditoria rápida
+                try {
+                    localStorage.setItem(`contrato_aceito_vaga_${validVagaId}`, JSON.stringify({
+                        vagaId: validVagaId,
+                        freelancerId: freelancerId,
+                        dataAceite: new Date().toISOString(),
+                        versaoContrato: '1.0'
+                    }));
+                } catch(e) {}
+
+                // Registra alerta imediato para a empresa: Anúncio Aceito pelo Freelancer
+                try {
+                    const freeNome = currentFreelancer?.nome_completo || 'Novo Freelancer';
+                    window.MinhaExtra.NotificationManager.addNotification({
+                        titulo: '🎉 Anúncio Aceito por Freelancer!',
+                        mensagem: `${freeNome} aceitou o contrato digital e confirmou presença para a vaga "${currentVagaObj?.titulo || 'Oportunidade Extra'}".`,
+                        tipo: 'anuncio_aceito',
+                        vaga_id: validVagaId,
+                        vaga_titulo: currentVagaObj?.titulo || 'Oportunidade Extra',
+                        freelancer_nome: freeNome,
+                        valor: currentVagaObj?.valor_pagamento || 0,
+                        empresa_id: currentVagaObj?.empresa_id || null,
+                        metadados: {
+                            freelancer_id: freelancerId,
+                            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        }
+                    });
+                } catch(errNotif) {
+                    console.warn('Erro ao disparar notificação de aceite:', errNotif);
+                }
+
+                jaCandidatado = true;
+                fecharModalContrato();
+                marcarComoJaCandidatado('pendente');
+                showToast('Contrato Aceito & Candidatura Registrada!', 'Seu contrato assinado digitalmente foi formalizado na tabela candidaturas do Supabase.');
+
+            } catch(e) {
+                console.warn('Fallback candidatura local com contrato:', e);
+
+                // Registra alerta também no fallback
+                try {
+                    const freeNome = currentFreelancer?.nome_completo || 'Novo Freelancer';
+                    window.MinhaExtra.NotificationManager.addNotification({
+                        titulo: '🎉 Anúncio Aceito por Freelancer!',
+                        mensagem: `${freeNome} aceitou o contrato digital e confirmou presença para a vaga "${currentVagaObj?.titulo || 'Oportunidade Extra'}".`,
+                        tipo: 'anuncio_aceito',
+                        vaga_id: currentVagaId || 101,
+                        vaga_titulo: currentVagaObj?.titulo || 'Oportunidade Extra',
+                        freelancer_nome: freeNome,
+                        valor: currentVagaObj?.valor_pagamento || 0,
+                        empresa_id: currentVagaObj?.empresa_id || null,
+                        metadados: {
+                            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        }
+                    });
+                } catch(errN) {}
+
+                jaCandidatado = true;
+                fecharModalContrato();
+                marcarComoJaCandidatado('pendente');
+                showToast('Contrato Formalizado!', 'Sua candidatura e termo de contrato foram registrados com sucesso.');
+            } finally {
+                spinnerConfirmar.style.display = 'none';
+            }
+        }
+
+        // Impressão / visualização em PDF do contrato
+        function imprimirContrato() {
+            window.print();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+
+        function showToast(titulo, mensagem) {
+            const toast = document.getElementById('toast');
+            if (titulo) document.getElementById('toast-title').innerText = titulo;
+            if (mensagem) document.getElementById('toast-message').innerText = mensagem;
+
+            toast.classList.remove('-translate-y-[150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-[150%]', 'opacity-0');
+            }, 4500);
+        }
+    </script>
+</body>
+</html>

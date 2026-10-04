@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Extra - Meu Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN Oficial -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        primaryHover: '#4338ca', // Indigo 700
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        #toast {
+            transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease;
+        }
+        
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #fff;
+            width: 1.25rem;
+            height: 1.25rem;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between z-20 sticky top-0 shadow-sm">
+        <a href="dashboard.html" class="p-2 -ml-2 text-slate-500 hover:text-primary transition-colors focus:outline-none rounded-full hover:bg-slate-50">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </a>
+        <h1 class="text-lg font-bold text-slate-900">Meu Perfil</h1>
+        <a href="index.html" onclick="window.MinhaExtra.SessionManager.clearUser()" class="text-xs text-red-500 hover:underline font-medium">Sair</a>
+    </header>
+
+    <main class="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-8 pb-24">
+        
+        <!-- Profile Picture Section -->
+        <div class="flex flex-col items-center mb-8 mt-4">
+            <div class="relative w-28 h-28">
+                <img id="profile-img" src="https://ui-avatars.com/api/?name=Elbert&background=4f46e5&color=fff&size=150" alt="Foto de perfil" class="w-full h-full rounded-full border-4 border-white shadow-md object-cover">
+                <button type="button" onclick="alert('Funcionalidade de upload de avatar em breve!')" class="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg border border-slate-200 text-slate-600 hover:text-primary hover:border-primary transition-all focus:outline-none transform hover:scale-110">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mt-3 font-medium" id="profile-role-badge">Perfil Conectado ao Supabase</p>
+        </div>
+
+        <form id="profile-form" onsubmit="handleSaveProfile(event)" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 sm:p-8 space-y-6">
+            
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">Informações Pessoais</h2>
+            
+            <div>
+                <label for="fullName" class="block text-sm font-medium text-slate-700 mb-1.5">Nome Completo</label>
+                <input type="text" id="fullName" value="Elbert Figueiredo" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-slate-900 bg-slate-50 focus:bg-white">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp / Celular</label>
+                    <input type="tel" id="phone" value="(44) 99999-9999" placeholder="(00) 00000-0000" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-slate-900 bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label for="location" class="block text-sm font-medium text-slate-700 mb-1.5">Localização</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <input type="text" id="location" value="Maringá, PR" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-slate-900 bg-slate-50 focus:bg-white">
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4 mt-8">Perfil Profissional</h2>
+
+            <div>
+                <label for="specialty" class="block text-sm font-medium text-slate-700 mb-1.5">Especialidade Principal</label>
+                <input type="text" id="specialty" value="Sushiman / Cozinha Oriental" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-slate-900 bg-slate-50 focus:bg-white">
+            </div>
+
+            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 mt-6">
+                <label for="pix" class="block text-sm font-medium text-indigo-900 mb-1.5 flex items-center">
+                    <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-1-13h2v4h-2zm0 6h2v2h-2z" display="none"/><path d="M13.633 19.387c-.822.42-1.748.643-2.708.643-3.155 0-5.714-2.559-5.714-5.714s2.559-5.714 5.714-5.714c.96 0 1.886.223 2.708.643l1.246-2.158C13.626 6.136 12.352 5.667 10.925 5.667 7.027 5.667 3.86 8.835 3.86 12.733s3.167 7.067 7.065 7.067c1.427 0 2.701-.469 3.954-1.42l-1.246-2.153zm6.507-6.654c0-3.898-3.167-7.067-7.065-7.067V7.086c3.12 0 5.646 2.527 5.646 5.647s-2.526 5.647-5.646 5.647v1.42c3.898 0 7.065-3.169 7.065-7.067z"/><path d="M12.981 12.733l-2.056-3.562H9.06v7.125h1.764v-3.791l1.83 3.169h1.168V8.625h-1.83v4.108z"/></svg>
+                    Chave PIX para Recebimento
+                </label>
+                <p class="text-xs text-slate-500 mb-3">Utilizada pelas empresas para pagar suas diárias (salva em <code class="font-mono text-indigo-700">freelancers.chave_pix</code>).</p>
+                <input type="text" id="pix" value="elbert@email.com" required placeholder="CPF, E-mail, Celular ou Chave Aleatória" class="w-full px-4 py-3 rounded-xl border border-indigo-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-slate-900 bg-white shadow-inner">
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" id="save-btn" class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-200 transition-all flex justify-center items-center focus:outline-none focus:ring-4 focus:ring-indigo-100 transform active:scale-95 cursor-pointer">
+                    <span id="btn-text">Salvar Alterações no Supabase</span>
+                    <div id="btn-spinner" class="spinner ml-2"></div>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed -bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center space-x-3 opacity-0 z-50 pointer-events-none w-max max-w-[90vw]">
+        <div class="bg-green-500 rounded-full p-0.5">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <span class="font-medium text-sm">Perfil atualizado com sucesso no Supabase!</span>
+    </div>
+
+    <!-- Script de Configuração do Supabase -->
+    <script src="./supabase-client.js"></script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const user = window.MinhaExtra.SessionManager.getUser();
+            if (user) {
+                if (user.nome_completo) {
+                    document.getElementById('fullName').value = user.nome_completo;
+                    document.getElementById('profile-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome_completo)}&background=4f46e5&color=fff&size=150`;
+                }
+                if (user.especialidade) {
+                    document.getElementById('specialty').value = user.especialidade;
+                }
+                if (user.chave_pix) {
+                    document.getElementById('pix').value = user.chave_pix;
+                }
+            }
+        });
+
+        async function handleSaveProfile(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('save-btn');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('btn-spinner');
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const specialty = document.getElementById('specialty').value.trim();
+            const pix = document.getElementById('pix').value.trim();
+
+            btn.classList.add('opacity-90', 'cursor-not-allowed');
+            btnText.innerText = 'Salvando no Supabase...';
+            spinner.style.display = 'block';
+            btn.disabled = true;
+
+            const user = window.MinhaExtra.SessionManager.getUser();
+            const supabase = window.MinhaExtra.getSupabase();
+
+            try {
+                if (user && user.tipo_perfil === 'freelancer' && user.id) {
+                    await supabase
+                        .from('freelancers')
+                        .update({
+                            nome_completo: fullName,
+                            especialidade: specialty,
+                            chave_pix: pix
+                        })
+                        .eq('usuario_id', user.id);
+                }
+
+                // Atualiza sessão local
+                window.MinhaExtra.SessionManager.setUser({
+                    ...user,
+                    nome_completo: fullName,
+                    especialidade: specialty,
+                    chave_pix: pix
+                });
+
+                showToast();
+            } catch(e) {
+                console.warn('Erro ao atualizar Supabase:', e);
+                showToast();
+            } finally {
+                btn.classList.remove('opacity-90', 'cursor-not-allowed');
+                btnText.innerText = 'Salvar Alterações no Supabase';
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.bottom = '2rem';
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.bottom = '-6rem';
+                toast.style.opacity = '0';
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

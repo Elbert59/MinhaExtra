@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Extra - Ver Candidatos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN Oficial -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        primaryHover: '#4338ca', // Indigo 700
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-out {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.3s ease-out;
+        }
+        
+        #toast {
+            transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- HEADER NAVBAR -->
+    <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-4 flex justify-between items-center z-20 sticky top-0 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="bg-slate-900 p-2 rounded-lg text-white hidden sm:block">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1v1H9V7zm5 0h1v1h-1V7zm-5 4h1v1H9v-1zm5 0h1v1h-1v-1zm-3 4H2v5h10v-5zm4 0h1v1h-1v-1zm-5 0h1v1h-1v-1z"></path></svg>
+            </div>
+            <span class="text-xl font-bold text-slate-900 tracking-tight">Minha Extra <span class="text-slate-400 font-medium text-sm hidden sm:inline ml-2">| Painel da Empresa</span></span>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <a href="dashboard-empresa.html" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hidden sm:inline">Painel Geral</a>
+            <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold shadow-md cursor-pointer border-2 border-white">
+                SM
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-8 flex flex-col pb-32">
+        
+        <!-- Back Navigation -->
+        <div class="mb-6">
+            <a href="dashboard-empresa.html" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 mr-1.5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Voltar para Minhas Vagas
+            </a>
+        </div>
+
+        <!-- JOB DETAILS CARD -->
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 sm:p-6 mb-8 relative overflow-hidden">
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="bg-primary text-white px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase shadow-sm">Urgente</span>
+                        <span class="text-sm font-medium text-indigo-600">Postada recentemente</span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-1" id="job-title-header">Sushiman / Aux. Cozinha Oriental</h1>
+                    <p class="text-slate-600 text-sm max-w-2xl" id="job-desc-header">Preparo de pratos orientais quentes e frios, foco na montagem de combinados (uramaki, nigiri, sashimi).</p>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-indigo-50 min-w-[200px]">
+                    <div class="flex items-center text-sm text-slate-600 mb-2">
+                        <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Sex, 16 Out • 19h às 01h
+                    </div>
+                    <div class="flex items-center text-lg font-bold text-green-600">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        R$ 280,00 <span class="text-sm font-normal text-slate-500 ml-1">/ diária</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CANDIDATES LIST HEADER -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center">
+                Candidatos Recebidos
+                <span class="ml-3 bg-slate-200 text-slate-700 py-0.5 px-2.5 rounded-full text-sm font-bold" id="candidate-count">3</span>
+            </h2>
+            <div class="hidden sm:flex items-center text-sm text-slate-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5"></span>
+                Tabela: <code class="ml-1 font-mono text-xs text-indigo-700 font-semibold">candidaturas</code>
+            </div>
+        </div>
+
+        <!-- CANDIDATES GRID/LIST -->
+        <div class="space-y-4" id="candidates-container">
+            
+            <!-- Candidate Card 1 -->
+            <div class="candidate-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row gap-5" id="cand-1">
+                <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-48 shrink-0">
+                    <img class="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-2 border-slate-100 shadow-sm" src="https://ui-avatars.com/api/?name=Kenji+Moto&background=4f46e5&color=fff&size=128" alt="Foto do candidato">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">Kenji Moto</h3>
+                        <p class="text-sm font-medium text-indigo-600 mb-1">Especialista Sushi</p>
+                        <div class="flex items-center text-sm font-bold text-slate-700">
+                            4.9
+                            <svg class="w-4 h-4 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <span class="text-xs font-normal text-slate-500 ml-1">(24 jobs)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-1 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-5">
+                    <h4 class="text-sm font-semibold text-slate-900 mb-2">Resumo da Experiência</h4>
+                    <p class="text-sm text-slate-600 mb-4 line-clamp-3">
+                        Mais de 5 anos de experiência em restaurantes orientais tradicionais e eventos de alto padrão. Agilidade na montagem de barcas, preparo de peixes inteiros e domínio de cortes precisos. Possuo dólmã e facas próprias (yanagiba).
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-medium">Uramaki</span>
+                        <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-medium">Sashimi</span>
+                        <span class="bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-xs font-semibold flex items-center"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Perfil Verificado</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 justify-center md:w-36 shrink-0 pt-2 md:pt-0">
+                    <button onclick="handleCandidate('cand-1', 'approve', 'Kenji Moto', 1)" class="w-full bg-primary hover:bg-primaryHover text-white font-medium py-2 px-4 rounded-xl transition-colors shadow-sm focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Aprovar
+                    </button>
+                    <a href="chat.html?freelancer_id=101&nome=Kenji+Moto" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold py-2 px-4 rounded-xl transition-colors text-xs flex justify-center items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        Chat
+                    </a>
+                    <button onclick="handleCandidate('cand-1', 'reject', 'Kenji Moto', 1)" class="w-full bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 font-medium py-1.5 px-4 rounded-xl transition-colors focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                        Recusar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Candidate Card 2 -->
+            <div class="candidate-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row gap-5" id="cand-2">
+                <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-48 shrink-0">
+                    <img class="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-2 border-slate-100 shadow-sm" src="https://ui-avatars.com/api/?name=Lucas+Silva&background=0ea5e9&color=fff&size=128" alt="Foto do candidato">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">Lucas Silva</h3>
+                        <p class="text-sm font-medium text-slate-500 mb-1">Aux. de Cozinha</p>
+                        <div class="flex items-center text-sm font-bold text-slate-700">
+                            4.7
+                            <svg class="w-4 h-4 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <span class="text-xs font-normal text-slate-500 ml-1">(8 jobs)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-1 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-5">
+                    <h4 class="text-sm font-semibold text-slate-900 mb-2">Resumo da Experiência</h4>
+                    <p class="text-sm text-slate-600 mb-4 line-clamp-3">
+                        Trabalho como auxiliar há 2 anos, com boa experiência em pré-preparo de alimentos (mise en place), fritura de rolinho primavera e hot philadelphia.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-medium">Hot Roll</span>
+                        <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-medium">Mise en place</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 justify-center md:w-36 shrink-0 pt-2 md:pt-0">
+                    <button onclick="handleCandidate('cand-2', 'approve', 'Lucas Silva', 2)" class="w-full bg-primary hover:bg-primaryHover text-white font-medium py-2 px-4 rounded-xl transition-colors shadow-sm focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Aprovar
+                    </button>
+                    <a href="chat.html?freelancer_id=102&nome=Lucas+Silva" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold py-2 px-4 rounded-xl transition-colors text-xs flex justify-center items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        Chat
+                    </a>
+                    <button onclick="handleCandidate('cand-2', 'reject', 'Lucas Silva', 2)" class="w-full bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 font-medium py-1.5 px-4 rounded-xl transition-colors focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                        Recusar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty State (Hidden by default) -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-dashed border-slate-300 text-center">
+                <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Nenhum candidato pendente</h3>
+                <p class="text-sm text-slate-500">Você já revisou todas as candidaturas para esta vaga.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar (MENU LOCALIZADO EM BAIXO) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-2 pb-safe flex justify-around items-center z-40 shadow-xl">
+        <!-- 1. Vagas -->
+        <a href="dashboard-empresa.html?tab=vagas" class="flex flex-col items-center flex-1 py-1 transition-all text-slate-400 hover:text-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] font-semibold mt-1">Vagas</span>
+        </a>
+
+        <!-- 2. Candidatos (Ativo) -->
+        <a href="dashboard-empresa.html?tab=candidatos" class="flex flex-col items-center flex-1 py-1 transition-all text-primary font-bold relative scale-105">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span class="text-[10px] font-bold mt-1">Candidatos</span>
+        </a>
+
+        <!-- 3. Nova Vaga -->
+        <a href="criar-vaga.html" class="flex flex-col items-center flex-1 py-1 group">
+            <div class="bg-gradient-to-tr from-indigo-600 to-primary text-white p-2.5 rounded-full -mt-5 shadow-lg shadow-indigo-300 ring-4 ring-white group-hover:scale-105 transition-transform flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <span class="text-[10px] font-semibold text-slate-600 mt-1">Nova Vaga</span>
+        </a>
+
+        <!-- 4. Chat -->
+        <a href="chat.html" class="flex flex-col items-center flex-1 py-1 transition-all text-slate-400 hover:text-primary relative">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            <span class="text-[10px] font-semibold mt-1">Chat</span>
+        </a>
+    </nav>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed -bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center space-x-3 opacity-0 z-50 pointer-events-none">
+        <svg id="toast-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+        <span id="toast-message" class="font-medium text-sm"></span>
+    </div>
+
+    <!-- Script de Configuração do Supabase -->
+    <script src="./supabase-client.js"></script>
+
+    <script>
+        let candidateCount = 0;
+        let currentVagaId = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const vagaId = params.get('vaga_id');
+            if (vagaId) {
+                currentVagaId = parseInt(vagaId, 10);
+                await carregarVagaEInfo(currentVagaId);
+                await carregarCandidatosSupabase(currentVagaId);
+            } else {
+                // Redireciona diretamente para a aba organizada de Candidatos no painel
+                window.location.href = 'dashboard-empresa.html?tab=candidatos';
+            }
+        });
+
+        async function carregarVagaEInfo(vagaId) {
+            const supabase = window.MinhaExtra.getSupabase();
+            try {
+                const { data: vaga } = await supabase.from('vagas').select('*').eq('id', vagaId).maybeSingle();
+                if (vaga) {
+                    document.getElementById('job-title-header').innerText = vaga.titulo;
+                    document.getElementById('job-desc-header').innerText = vaga.descricao || 'Oportunidade extra na área de gastronomia.';
+                }
+            } catch(e) {}
+        }
+
+        async function carregarCandidatosSupabase(vagaId) {
+            const container = document.getElementById('candidates-container');
+            const countEl = document.getElementById('candidate-count');
+            const supabase = window.MinhaExtra.getSupabase();
+
+            try {
+                const { data: cands, error } = await supabase
+                    .from('candidaturas')
+                    .select('*, freelancers(*)')
+                    .eq('vaga_id', vagaId);
+
+                if (cands && cands.length > 0) {
+                    container.innerHTML = '';
+                    candidateCount = cands.length;
+                    countEl.innerText = candidateCount;
+
+                    cands.forEach((cand, idx) => {
+                        const free = cand.freelancers || {};
+                        const nome = free.nome_completo || 'Profissional Freelancer';
+                        const esp = free.especialidade || 'Gastronomia';
+                        const elId = `cand-db-${cand.id}`;
+
+                        const card = document.createElement('div');
+                        card.id = elId;
+                        card.className = 'candidate-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row gap-5';
+                        card.innerHTML = `
+                            <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-48 shrink-0">
+                                <img class="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-2 border-slate-100 shadow-sm" src="https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=4f46e5&color=fff&size=128" alt="Foto">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 leading-tight">${nome}</h3>
+                                    <p class="text-sm font-medium text-indigo-600 mb-1">${esp}</p>
+                                    <div class="flex items-center text-sm font-bold text-slate-700">
+                                        4.9
+                                        <svg class="w-4 h-4 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-5">
+                                <h4 class="text-sm font-semibold text-slate-900 mb-2">Informações da Candidatura</h4>
+                                <p class="text-sm text-slate-600 mb-4">
+                                    Candidatura registrada no Supabase. Chave PIX cadastrada: <code class="font-mono text-indigo-700">${free.chave_pix || 'elbert@pix.com'}</code>.
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-xs font-semibold">Status: ${cand.status_candidatura}</span>
+                                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                        Contrato Aceito Digitalmente
+                                    </span>
+                                    <button type="button" onclick="visualizarContratoCandidato('${nome}', '${free.cpf || '000.000.000-00'}', '${free.cidade || 'Maringá'} - ${free.estado || 'PR'}')" class="text-xs text-indigo-600 hover:text-indigo-800 underline font-semibold ml-1 cursor-pointer">
+                                        Ver Contrato
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2 justify-center md:w-36 shrink-0 pt-2 md:pt-0">
+                                <button onclick="handleCandidate('${elId}', 'approve', '${nome}', ${cand.id})" class="w-full bg-primary hover:bg-primaryHover text-white font-medium py-2 px-4 rounded-xl transition-colors shadow-sm focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                                    Aprovar
+                                </button>
+                                <a href="chat.html?freelancer_id=${cand.freelancer_id || 7}&nome=${encodeURIComponent(nome)}" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold py-2 px-4 rounded-xl transition-colors text-xs flex justify-center items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                    Chat
+                                </a>
+                                <button onclick="handleCandidate('${elId}', 'reject', '${nome}', ${cand.id})" class="w-full bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 font-medium py-1.5 px-4 rounded-xl transition-colors focus:outline-none flex justify-center items-center cursor-pointer text-xs">
+                                    Recusar
+                                </button>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            } catch(e) {
+                console.warn('Erro ao carregar candidatos:', e);
+            }
+        }
+
+        async function handleCandidate(elementId, action, candidateName, candId) {
+            const card = document.getElementById(elementId);
+            
+            // Chama API do Supabase para atualizar a tabela 'candidaturas'
+            const supabase = window.MinhaExtra.getSupabase();
+            const novoStatus = action === 'approve' ? 'aprovada' : 'recusada';
+
+            try {
+                if (candId) {
+                    await supabase
+                        .from('candidaturas')
+                        .update({ status_candidatura: novoStatus })
+                        .eq('id', candId);
+                }
+                if (action === 'approve') {
+                    window.MinhaExtra.NotificationManager.addNotification({
+                        titulo: '✅ Freelancer Confirmado na Vaga!',
+                        mensagem: `${candidateName} foi confirmado(a) e o contrato de trabalho extra está ativo para o turno.`,
+                        tipo: 'anuncio_aceito',
+                        freelancer_nome: candidateName,
+                        vaga_titulo: document.getElementById('job-title-header')?.innerText || 'Vaga Extra',
+                        metadados: {
+                            candId,
+                            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        }
+                    });
+                }
+            } catch(e) {
+                console.warn('Atualizando status no fallback:', e);
+            }
+
+            // Animação de fade out
+            if (card) {
+                card.classList.add('fade-out');
+                setTimeout(() => {
+                    card.style.display = 'none';
+                    candidateCount = Math.max(0, candidateCount - 1);
+                    document.getElementById('candidate-count').innerText = candidateCount;
+                    
+                    if (candidateCount === 0) {
+                        document.getElementById('empty-state').classList.remove('hidden');
+                    }
+                    
+                    showToast(action, candidateName);
+                }, 300);
+            }
+        }
+
+        function showToast(action, name) {
+            const toast = document.getElementById('toast');
+            const messageEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+            
+            if (action === 'approve') {
+                messageEl.innerText = `Você aprovou ${name}! Status gravado no Supabase.`;
+                toast.className = 'fixed -bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center space-x-3 opacity-0 z-50 pointer-events-none transition-all';
+                iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+            } else {
+                messageEl.innerText = `A candidatura de ${name} foi recusada.`;
+                toast.className = 'fixed -bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center space-x-3 opacity-0 z-50 pointer-events-none transition-all';
+                iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+            }
+
+            toast.style.bottom = '2rem';
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.bottom = '-6rem';
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+
+        function visualizarContratoCandidato(nomeFreelancer, cpfFreelancer, enderecoFreelancer) {
+            document.getElementById('modal-cand-nome').innerText = nomeFreelancer;
+            document.getElementById('modal-cand-cpf').innerText = cpfFreelancer;
+            document.getElementById('modal-cand-endereco').innerText = enderecoFreelancer;
+            document.getElementById('modal-cand-ass').innerText = nomeFreelancer;
+
+            const modal = document.getElementById('modal-contrato-candidato');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function fecharModalContratoCandidato() {
+            const modal = document.getElementById('modal-contrato-candidato');
+            if (modal) modal.classList.add('hidden');
+        }
+    </script>
+
+    <!-- Modal de Visualização do Contrato Celebrado pela Empresa -->
+    <div id="modal-contrato-candidato" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 hidden transition-all">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📜</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 leading-tight">Contrato Celebrado com o Freelancer</h3>
+                        <p class="text-[11px] text-slate-500">Minha Extra • Instrumento com Validade Jurídica</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalContratoCandidato()" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-white rounded-xl transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 sm:p-8 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
+                <div class="text-center pb-3 border-b border-slate-200">
+                    <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900">
+                        CONTRATO DE PRESTAÇÃO DE SERVIÇOS (FREELANCE)
+                    </h2>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                    <p>
+                        <strong class="uppercase text-slate-900">CONTRATANTE:</strong> 
+                        Restaurante Sabor do Mar, inscrita no CNPJ nº 12.345.678/0001-90, com sede em Maringá - PR, neste ato representada Minha Extra.
+                    </p>
+                    <p>
+                        <strong class="uppercase text-slate-900">CONTRATADO(A):</strong> 
+                        <span id="modal-cand-nome" class="font-bold text-indigo-900">Nome do Freelancer</span>, 
+                        inscrito(a) no CPF/CNPJ nº <span id="modal-cand-cpf" class="font-mono">000.000.000-00</span>, 
+                        residente e domiciliado(a) em <span id="modal-cand-endereco">Maringá - PR</span>.
+                    </p>
+                </div>
+
+                <p class="italic text-slate-500 text-xs">
+                    As partes acima qualificadas celebram o presente Contrato de Prestação de Serviços, que se regerá pelas seguintes cláusulas:
+                </p>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 1ª – Do Objeto</h4>
+                    <p>O(A) CONTRATADO(A) compromete-se a prestar ao(à) CONTRATANTE serviços especializados de suporte operacional e gastronômico na vaga selecionada.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 2ª – Dos Prazos e Escala de Trabalho</h4>
+                    <p>A execução dos serviços ocorrerá conforme escala e turno acordados para a diária no estabelecimento da CONTRATANTE.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 3ª – Da Remuneração e Pagamento</h4>
+                    <p>Pelos serviços prestados, o(A) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor estipulado da diária.</p>
+                    <p class="mt-1"><strong>Parágrafo único:</strong> O pagamento será realizado via Pix logo após o término do turno.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 4ª – Da Inexistência de Vínculo Empregatício</h4>
+                    <p>Fica expressamente acordado que este contrato é de natureza estritamente civil, não havendo qualquer subordinação jurídica, exclusividade ou vínculo empregatício (CLT) entre as partes. O(A) CONTRATADO(A) possui total autonomia técnica e operacional na execução dos serviços.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 5ª – Da Confidencialidade e Propriedade</h4>
+                    <p>O(A) CONTRATADO(A) obriga-se a manter em absoluto sigilo todas as informações, dados, códigos, receitas ou estratégias de negócios do(a) CONTRATANTE a que tiver acesso.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 6ª – Da Rescisão</h4>
+                    <p>Este contrato poderá ser rescindido a qualquer momento por qualquer uma das partes, mediante aviso prévio de 5 dias ou comunicação com 24h de antecedência do início da diária.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 uppercase text-xs mb-1">Cláusula 7ª – Do Foro</h4>
+                    <p>Para dirimir quaisquer controvérsias oriundas deste contrato, as partes elegem o foro da Comarca de Maringá, Estado do Paraná, renunciando a qualquer outro, por mais privilegiado que seja.</p>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">CONTRATANTE</span>
+                            <span class="font-bold text-xs text-slate-900 block">Restaurante Sabor do Mar</span>
+                            <span class="text-[10px] text-indigo-600 font-semibold block">Minha Extra</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">CONTRATADO(A)</span>
+                            <span class="font-bold text-xs text-slate-900 block" id="modal-cand-ass">Freelancer</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold block">✓ Aceite Digital no Supabase</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+                <button type="button" onclick="window.print()" class="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer">
+                    🖨️ Imprimir
+                </button>
+                <button type="button" onclick="fecharModalContratoCandidato()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

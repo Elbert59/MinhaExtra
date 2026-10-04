@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Extra - Chat Empresa & Freelancer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN Oficial -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        primaryHover: '#4338ca', // Indigo 700
+                        primaryLight: '#e0e7ff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .pb-safe { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+        }
+
+        .message-enter {
+            animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-dot {
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- TOP GLOBAL BAR -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-xs">
+        <div class="flex items-center space-x-3">
+            <a id="btn-back-dashboard" href="dashboard.html" class="p-2 -ml-2 text-slate-500 hover:text-primary transition-colors rounded-full hover:bg-slate-50 flex items-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <div class="flex items-center space-x-2">
+                <div class="bg-slate-900 p-1.5 rounded-lg text-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                </div>
+                <h1 class="text-base font-bold text-slate-900">Chat Direto <span class="hidden sm:inline text-xs font-normal text-slate-400">| Minha Extra</span></h1>
+            </div>
+        </div>
+
+        <!-- Indicador de Identidade Ativa -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex flex-col text-right">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Conectado como:</span>
+                <span class="text-xs font-bold text-slate-800" id="current-user-role-label">Carregando...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CHAT CONTAINER (SPLIT VIEW) -->
+    <div class="flex-1 flex overflow-hidden max-w-6xl w-full mx-auto bg-white sm:border-x sm:border-slate-200 sm:shadow-lg">
+        
+        <!-- SIDEBAR: LISTA DE CONVERSAS -->
+        <aside id="chat-sidebar" class="w-full sm:w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col shrink-0 z-10 transition-all">
+            <!-- Sidebar Header / Search -->
+            <div class="p-3.5 border-b border-slate-100 bg-slate-50/50">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" id="contacts-list-title">Conversas Recentes</span>
+                    <span class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full" id="contacts-badge">3 Contatos</span>
+                </div>
+                <div class="relative">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" id="contact-search" oninput="filterContacts()" placeholder="Buscar contato..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none">
+                </div>
+            </div>
+
+            <!-- Contacts List -->
+            <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="contacts-container">
+                <!-- Injetado via JavaScript -->
+            </div>
+        </aside>
+
+        <!-- AREA DA CONVERSA ATIVA -->
+        <section id="chat-main" class="flex-1 flex flex-col bg-slate-50/60 overflow-hidden w-full">
+            
+            <!-- Conversation Header -->
+            <div class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
+                <div class="flex items-center space-x-3">
+                    <!-- Botão voltar lista (em mobile) -->
+                    <button onclick="backToContactsMobile()" class="sm:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    
+                    <div class="relative">
+                        <img id="active-contact-avatar" src="https://ui-avatars.com/api/?name=Elbert+F&background=4f46e5&color=fff" class="w-10 h-10 rounded-full border border-slate-100 object-cover shadow-xs" alt="Avatar">
+                        <span class="w-3 h-3 bg-emerald-500 border-2 border-white rounded-full absolute bottom-0 right-0"></span>
+                    </div>
+
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 leading-tight" id="active-contact-name">Elbert Figueiredo</h2>
+                        <p class="text-[11px] text-slate-500 font-medium" id="active-contact-sub">Sushiman / Culinária Oriental • <span class="text-emerald-600 font-semibold">Online</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <!-- Botão Simular Resposta Rápida da outra ponta -->
+                    <button onclick="simulateReply()" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs cursor-pointer" title="Simula uma resposta imediata para teste">
+                        <svg class="w-3.5 h-3.5 text-indigo-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span class="hidden md:inline">Simular</span> Resposta
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sugestões Rápidas de Mensagens (Quick Chips) -->
+            <div class="bg-white/80 border-b border-slate-100 px-3 py-2 flex items-center gap-2 overflow-x-auto text-xs shrink-0">
+                <span class="text-[11px] text-slate-400 font-semibold shrink-0">Atalhos:</span>
+                <div id="quick-chips-container" class="flex gap-2">
+                    <!-- Chips injetados dinamicamente baseado no perfil -->
+                </div>
+            </div>
+
+            <!-- Messages Stream Area -->
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Mensagens renderizadas dinamicamente -->
+            </div>
+
+            <!-- Indicador "Digitando..." -->
+            <div id="typing-indicator" class="hidden px-4 py-2 flex items-center space-x-2 text-slate-400 text-xs">
+                <div class="bg-white px-3 py-1.5 rounded-full shadow-xs border border-slate-200 flex items-center space-x-1">
+                    <span class="text-[11px] font-medium mr-1 text-slate-500" id="typing-name">Digitando</span>
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                </div>
+            </div>
+
+            <!-- Message Input Footer -->
+            <footer class="bg-white border-t border-slate-200 p-3 pb-safe shrink-0 shadow-sm">
+                <form id="chat-form" onsubmit="handleSendMessage(event)" class="flex items-end space-x-2">
+                    <div class="flex-1 bg-slate-100 rounded-2xl border border-transparent focus-within:border-indigo-400 focus-within:bg-white transition-all overflow-hidden flex items-center min-h-[46px] px-3">
+                        <input 
+                            type="text" 
+                            id="message-input" 
+                            placeholder="Escreva sua mensagem aqui..." 
+                            class="w-full bg-transparent border-none focus:ring-0 text-xs sm:text-sm text-slate-800 outline-none py-2.5"
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <button type="submit" id="send-button" class="p-3 bg-primary text-white rounded-xl hover:bg-primaryHover transition-transform transform active:scale-95 focus:outline-none focus:ring-3 focus:ring-indigo-200 shrink-0 shadow-md cursor-pointer flex items-center justify-center">
+                        <svg class="w-4 h-4 translate-x-[1px]" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    </button>
+                </form>
+            </footer>
+
+        </section>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (MENU LOCALIZADO EM BAIXO) -->
+    <nav id="empresa-bottom-nav" class="bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-2 pb-safe flex justify-around items-center z-40 shadow-xl shrink-0">
+        <!-- 1. Vagas -->
+        <a href="dashboard-empresa.html?tab=vagas" class="flex flex-col items-center flex-1 py-1 transition-all text-slate-400 hover:text-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] font-semibold mt-1">Vagas</span>
+        </a>
+
+        <!-- 2. Candidatos -->
+        <a href="dashboard-empresa.html?tab=candidatos" class="flex flex-col items-center flex-1 py-1 transition-all text-slate-400 hover:text-primary relative">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span class="text-[10px] font-semibold mt-1">Candidatos</span>
+        </a>
+
+        <!-- 3. Nova Vaga -->
+        <a href="criar-vaga.html" class="flex flex-col items-center flex-1 py-1 group">
+            <div class="bg-gradient-to-tr from-indigo-600 to-primary text-white p-2.5 rounded-full -mt-5 shadow-lg shadow-indigo-300 ring-4 ring-white group-hover:scale-105 transition-transform flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <span class="text-[10px] font-semibold text-slate-600 mt-1">Nova Vaga</span>
+        </a>
+
+        <!-- 4. Chat (Ativo) -->
+        <a href="chat.html" class="flex flex-col items-center flex-1 py-1 transition-all text-primary font-bold relative scale-105">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            <span class="text-[10px] font-bold mt-1">Chat</span>
+        </a>
+    </nav>
+
+    <!-- Script de Configuração do Supabase -->
+    <script src="./supabase-client.js"></script>
+
+    <script>
+        // Dados de contatos modelo
+        const CONTATOS_FREELANCERS = [
+            { id: 7, tipo: 'freelancer', nome: 'Elbert Figueiredo', sub: 'Sushiman / Culinária Oriental', avatar: 'https://ui-avatars.com/api/?name=Elbert+F&background=4f46e5&color=fff' },
+            { id: 101, tipo: 'freelancer', nome: 'Kenji Moto', sub: 'Especialista em Sushi & Frutos do Mar', avatar: 'https://ui-avatars.com/api/?name=Kenji+M&background=0ea5e9&color=fff' },
+            { id: 102, tipo: 'freelancer', nome: 'Lucas Silva', sub: 'Auxiliar de Cozinha & Mise en place', avatar: 'https://ui-avatars.com/api/?name=Lucas+S&background=10b981&color=fff' }
+        ];
+
+        const CONTATOS_EMPRESAS = [
+            { id: 2, tipo: 'empresa', nome: 'Restaurante Sabor do Mar', sub: 'Restaurante de Frutos do Mar & Oriental', avatar: 'https://ui-avatars.com/api/?name=Sabor+Mar&background=1e293b&color=fff' },
+            { id: 105, tipo: 'empresa', nome: 'Buffet Sabores do Oriente', sub: 'Eventos & Recepções', avatar: 'https://ui-avatars.com/api/?name=Buffet+Oriente&background=6366f1&color=fff' },
+            { id: 106, tipo: 'empresa', nome: 'Sushi Bar Tokyo', sub: 'Maringá - PR (Centro)', avatar: 'https://ui-avatars.com/api/?name=Tokyo+Sushi&background=0f172a&color=fff' }
+        ];
+
+        // Mensagens padrão iniciais
+        const DEFAULT_CONVERSATIONS = {
+            'chat_empresa_2_free_7': [
+                { senderType: 'empresa', senderName: 'Restaurante Sabor do Mar', text: 'Olá Elbert! Vimos sua candidatura registrada no Minha Extra para o trabalho de sushiman.', time: '14:20' },
+                { senderType: 'freelancer', senderName: 'Elbert Figueiredo', text: 'Boa tarde! Tudo bem? Sim, tenho interesse no trabalho!', time: '14:22' },
+                { senderType: 'empresa', senderName: 'Restaurante Sabor do Mar', text: 'Ótimo! Você conseguiria chegar às 18h no nosso restaurante no centro de Maringá?', time: '14:25' },
+                { senderType: 'freelancer', senderName: 'Elbert Figueiredo', text: 'Consigo perfeitamente. Preciso levar meu próprio jogo de facas?', time: '14:26' },
+                { senderType: 'empresa', senderName: 'Restaurante Sabor do Mar', text: 'Se você tiver yanagiba própria é perfeito! O restante dos insumos já está separado.', time: '14:28' }
+            ],
+            'chat_empresa_2_free_101': [
+                { senderType: 'empresa', senderName: 'Restaurante Sabor do Mar', text: 'Olá Kenji! Tudo bem? Sua candidatura foi aprovada para a diária de sábado.', time: '10:00' },
+                { senderType: 'freelancer', senderName: 'Kenji Moto', text: 'Excelente notícia! Estarei presente às 18h30 conforme combinado.', time: '10:05' }
+            ]
+        };
+
+        let currentActiveContact = null;
+        let isEmpresaMode = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const user = window.MinhaExtra.SessionManager.getUser();
+            isEmpresaMode = (user && user.tipo_perfil === 'empresa');
+
+            // Verifica se a URL passou parâmetros de freelancer específico (ex: vindo de candidatos.html)
+            const params = new URLSearchParams(window.location.search);
+            const targetFreeId = params.get('freelancer_id');
+            const targetNome = params.get('nome');
+
+            setupUserRoleUI();
+
+            // Seleciona o contato alvo ou o primeiro da lista
+            const listaContatos = isEmpresaMode ? CONTATOS_FREELANCERS : CONTATOS_EMPRESAS;
+            if (targetFreeId) {
+                const found = listaContatos.find(c => c.id == targetFreeId);
+                currentActiveContact = found || {
+                    id: parseInt(targetFreeId, 10),
+                    tipo: 'freelancer',
+                    nome: targetNome || 'Freelancer Candidato',
+                    sub: 'Candidatura no Minha Extra',
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(targetNome || 'F')}&background=4f46e5&color=fff`
+                };
+            } else {
+                currentActiveContact = listaContatos[0];
+            }
+
+            renderContactsList();
+            renderActiveConversation();
+            renderQuickChips();
+        });
+
+        function setupUserRoleUI() {
+            const label = document.getElementById('current-user-role-label');
+            const backBtn = document.getElementById('btn-back-dashboard');
+            const contactsTitle = document.getElementById('contacts-list-title');
+
+            if (isEmpresaMode) {
+                if (label) label.innerText = '🏢 Empresa (Restaurante Sabor do Mar)';
+                if (backBtn) backBtn.href = 'dashboard-empresa.html';
+                if (contactsTitle) contactsTitle.innerText = 'Freelancers / Candidatos';
+            } else {
+                if (label) label.innerText = '👨‍🍳 Freelancer (Elbert Figueiredo)';
+                if (backBtn) backBtn.href = 'dashboard.html';
+                if (contactsTitle) contactsTitle.innerText = 'Empresas / Contratantes';
+            }
+        }
+
+        function getConversationKey() {
+            if (!currentActiveContact) return 'chat_default';
+            if (isEmpresaMode) {
+                return `chat_empresa_2_free_${currentActiveContact.id}`;
+            } else {
+                return `chat_empresa_${currentActiveContact.id}_free_7`;
+            }
+        }
+
+        function getStoredMessages(convKey) {
+            try {
+                const store = JSON.parse(localStorage.getItem('minha_extra_chat_store') || '{}');
+                if (store[convKey]) {
+                    return store[convKey];
+                }
+                if (DEFAULT_CONVERSATIONS[convKey]) {
+                    return DEFAULT_CONVERSATIONS[convKey];
+                }
+            } catch(e) {}
+            return [
+                { senderType: 'empresa', senderName: 'Restaurante', text: 'Olá! Conectados pelo Minha Extra.', time: '12:00' }
+            ];
+        }
+
+        function saveMessage(convKey, msgObj) {
+            const store = JSON.parse(localStorage.getItem('minha_extra_chat_store') || '{}');
+            const list = store[convKey] || (DEFAULT_CONVERSATIONS[convKey] ? [...DEFAULT_CONVERSATIONS[convKey]] : []);
+            list.push(msgObj);
+            store[convKey] = list;
+            localStorage.setItem('minha_extra_chat_store', JSON.stringify(store));
+        }
+
+        function renderContactsList() {
+            const container = document.getElementById('contacts-container');
+            const lista = isEmpresaMode ? CONTATOS_FREELANCERS : CONTATOS_EMPRESAS;
+            container.innerHTML = '';
+
+            lista.forEach(contato => {
+                const isSelected = currentActiveContact && currentActiveContact.id === contato.id;
+                const convKey = isEmpresaMode ? `chat_empresa_2_free_${contato.id}` : `chat_empresa_${contato.id}_free_7`;
+                const msgs = getStoredMessages(convKey);
+                const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1].text : 'Iniciar conversa...';
+
+                const item = document.createElement('div');
+                item.className = `p-3 flex items-center space-x-3 cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50/70 border-r-4 border-primary' : 'hover:bg-slate-50'}`;
+                item.onclick = () => selectContact(contato);
+                item.innerHTML = `
+                    <div class="relative shrink-0">
+                        <img src="${contato.avatar}" class="w-10 h-10 rounded-full border border-slate-100 object-cover" alt="avatar">
+                        <span class="w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full absolute bottom-0 right-0"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline mb-0.5">
+                            <h3 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(contato.nome)}</h3>
+                            <span class="text-[10px] text-slate-400">Agora</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 truncate">${escapeHtml(lastMsg)}</p>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectContact(contato) {
+            currentActiveContact = contato;
+            renderContactsList();
+            renderActiveConversation();
+            
+            // Em mobile, foca no chat
+            if (window.innerWidth < 640) {
+                document.getElementById('chat-sidebar').classList.add('hidden');
+                document.getElementById('chat-main').classList.remove('hidden');
+            }
+        }
+
+        function backToContactsMobile() {
+            document.getElementById('chat-sidebar').classList.remove('hidden');
+            document.getElementById('chat-main').classList.add('hidden');
+        }
+
+        function renderActiveConversation() {
+            if (!currentActiveContact) return;
+
+            document.getElementById('active-contact-name').innerText = currentActiveContact.nome;
+            document.getElementById('active-contact-sub').innerText = `${currentActiveContact.sub} • Online`;
+            document.getElementById('active-contact-avatar').src = currentActiveContact.avatar;
+
+            const container = document.getElementById('messages-container');
+            container.innerHTML = `
+                <div class="flex justify-center mb-3">
+                    <span class="bg-slate-200/60 text-slate-500 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full backdrop-blur-xs">
+                        Canal Seguro Minha Extra
+                    </span>
+                </div>
+            `;
+
+            const convKey = getConversationKey();
+            const messages = getStoredMessages(convKey);
+
+            messages.forEach(msg => {
+                appendMessageBubble(msg, false);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendMessageBubble(msg, animate = true) {
+            const container = document.getElementById('messages-container');
+            const isMe = (isEmpresaMode && msg.senderType === 'empresa') || (!isEmpresaMode && msg.senderType === 'freelancer');
+
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex flex-col space-y-1 ${isMe ? 'items-end' : 'items-start'} ${animate ? 'message-enter' : ''}`;
+
+            const bubbleColor = isMe 
+                ? 'bg-primary text-white rounded-2xl rounded-tr-xs shadow-sm shadow-indigo-200' 
+                : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs shadow-xs';
+
+            const senderLabel = isMe 
+                ? 'Você' 
+                : (msg.senderName || (msg.senderType === 'empresa' ? 'Empresa' : 'Freelancer'));
+
+            wrapper.innerHTML = `
+                <span class="text-[9px] text-slate-400 font-semibold px-1">${senderLabel}</span>
+                <div class="${bubbleColor} px-4 py-2.5 max-w-[85%] sm:max-w-[70%]">
+                    <p class="text-xs sm:text-sm leading-relaxed">${escapeHtml(msg.text)}</p>
+                </div>
+                <div class="flex items-center text-[10px] text-slate-400 px-1">
+                    <span>${msg.time || 'Agora'}</span>
+                    ${isMe ? '<svg class="w-3 h-3 text-indigo-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                </div>
+            `;
+
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleSendMessage(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const myType = isEmpresaMode ? 'empresa' : 'freelancer';
+            const myName = isEmpresaMode ? 'Restaurante Sabor do Mar' : 'Elbert Figueiredo';
+
+            const msgObj = {
+                senderType: myType,
+                senderName: myName,
+                text: text,
+                time: timeStr
+            };
+
+            const convKey = getConversationKey();
+            saveMessage(convKey, msgObj);
+            appendMessageBubble(msgObj, true);
+            renderContactsList();
+
+            // Auto-scroll e foco
+            input.focus();
+        }
+
+        function renderQuickChips() {
+            const container = document.getElementById('quick-chips-container');
+            container.innerHTML = '';
+
+            const chips = isEmpresaMode ? [
+                'Você tem disponibilidade para este sábado?',
+                'Qual o seu valor de diária para evento?',
+                'Precisa de uniforme ou possui dólmã própria?',
+                'Candidatura confirmada! Te aguardamos.'
+            ] : [
+                'Sim, tenho disponibilidade total!',
+                'Tenho conjunto de facas e dólmã próprios.',
+                'Perfeito! Estarei aí pontualmente.',
+                'Chave PIX enviada para acerto.'
+            ];
+
+            chips.forEach(chipText => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border border-slate-200 cursor-pointer';
+                btn.innerText = chipText;
+                btn.onclick = () => {
+                    document.getElementById('message-input').value = chipText;
+                    handleSendMessage();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // Simula a outra parte respondendo no chat
+        function simulateReply() {
+            const indicator = document.getElementById('typing-indicator');
+            const typingName = document.getElementById('typing-name');
+            const otherName = currentActiveContact ? currentActiveContact.nome : 'Contato';
+            typingName.innerText = `${otherName} está digitando`;
+            indicator.classList.remove('hidden');
+
+            const container = document.getElementById('messages-container');
+            container.scrollTop = container.scrollHeight;
+
+            const repliesEmpresa = [
+                'Perfeito! Confirmamos a sua presença para o trabalho.',
+                'Você receberá o pagamento da diária via PIX logo após o expediente.',
+                'O restaurante fica localizado na Av. Brasil, centro de Maringá.',
+                'Combinado! Qualquer dúvida pode nos mandar mensagem por aqui.'
+            ];
+
+            const repliesFreelancer = [
+                'Combinado! Chegarei com 15 minutos de antecedência.',
+                'Pode deixar, levarei meu material de trabalho completo.',
+                'Obrigado pela oportunidade! Até logo.',
+                'Confirmadíssimo! Até o início do turno.'
+            ];
+
+            const replyPool = isEmpresaMode ? repliesFreelancer : repliesEmpresa;
+            const chosenText = replyPool[Math.floor(Math.random() * replyPool.length)];
+
+            setTimeout(() => {
+                indicator.classList.add('hidden');
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                const otherType = isEmpresaMode ? 'freelancer' : 'empresa';
+                const msgObj = {
+                    senderType: otherType,
+                    senderName: otherName,
+                    text: chosenText,
+                    time: timeStr
+                };
+
+                const convKey = getConversationKey();
+                saveMessage(convKey, msgObj);
+                appendMessageBubble(msgObj, true);
+                renderContactsList();
+            }, 1200);
+        }
+
+        function filterContacts() {
+            const query = (document.getElementById('contact-search').value || '').toLowerCase();
+            const items = document.querySelectorAll('#contacts-container > div');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
